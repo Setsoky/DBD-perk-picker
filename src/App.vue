@@ -1,160 +1,107 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
+import BracketComponent from "./components/BracketComponent.vue"
 
-const greetMsg = ref("");
-const name = ref("");
+const perks = ref({});
+const killerPortraits = ref([])
+const T1 = ref("");
+const T2 = ref("");
+const created = ref(false);
+const selectedKiller = ref("")
 
-async function greet() {
-  // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-  greetMsg.value = await invoke("greet", { name: name.value });
+async function debugLog() {
+  console.log(selectedKiller)
 }
+
+async function getPerks() {
+  let killerPerks = await invoke("getIconData", {path: "perks/Killer"})
+  let survPerks = await invoke("getIconData", {path: "perks/Surv"})
+  perks.value = {
+    "Killer": killerPerks,
+    "Surv": survPerks
+  }
+  killerPortraits.value = await invoke("getIconData", {path: "KillerIcons"})
+}
+onMounted(async () => {
+  await getPerks();
+});
 </script>
 
-<template>
-  <main class="container">
-    <h1>Welcome to Tauri + Vue</h1>
+<template lang="pug">
+  v-app
+    v-main
+      template(v-if="!created")
+        div(class="d-flex justify-center" style="margin-top: 15%; margin-bottom: 2%")
+          h1 Create new match 
 
-    <div class="row">
-      <a href="https://vitejs.dev" target="_blank">
-        <img src="/vite.svg" class="logo vite" alt="Vite logo" />
-      </a>
-      <a href="https://tauri.app" target="_blank">
-        <img src="/tauri.svg" class="logo tauri" alt="Tauri logo" />
-      </a>
-      <a href="https://vuejs.org/" target="_blank">
-        <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-      </a>
-    </div>
-    <p>Click on the Tauri, Vite, and Vue logos to learn more.</p>
-
-    <form class="row" @submit.prevent="greet">
-      <input id="greet-input" v-model="name" placeholder="Enter a name..." />
-      <button type="submit">Greet</button>
-    </form>
-    <p>{{ greetMsg }}</p>
-  </main>
+        v-row(class="d-flex justify-center")
+          v-col(
+            cols="5"
+            sm="5"
+          )
+            v-text-field(
+              label="Team 1"
+              v-model="T1",
+              
+              variant="outlined"
+            )
+          v-col(
+            cols="5"
+            sm="5"
+          )
+            v-text-field(
+              label="Team 2"
+              v-model="T2",
+              variant="outlined"
+            )
+        div(class="d-flex justify-center")
+          v-btn(
+            class="text-none"
+            variant="text"
+            @Click="created = true"
+            border
+          ) Create match
+          
+      template(v-if="created")
+        v-row(class="d-flex justify-center align-center")
+          v-col(
+              cols="3"
+              sm="3"
+              class="text-center"
+          )
+            h2 {{T1}}
+          v-col(
+              cols="2"
+              sm="2"
+              class="text-center"
+          )
+            h1 VS.
+          v-col(
+              cols="3"
+              sm="3"
+              class="text-center"
+          )
+            h2 {{T2}}
+        div(class="d-flex justify-center")
+          BracketComponent(
+            :Team1="T1",
+            :Team2="T2"
+          )
+        div(class="d-flex justify-center" style="margin-top: 2%")
+          BracketComponent(
+            :Team1="T1",
+            :Team2="T2"
+          )
+        div(class="d-flex justify-center" style="margin-top: 2%")
+          BracketComponent(
+            :Team1="T1",
+            :Team2="T2"
+          )
+                    
+                
 </template>
 
 <style scoped>
-.logo.vite:hover {
-  filter: drop-shadow(0 0 2em #747bff);
-}
-
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #249b73);
-}
-
-</style>
-<style>
-:root {
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 400;
-
-  color: #0f0f0f;
-  background-color: #f6f6f6;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
-}
-
-.container {
-  margin: 0;
-  padding-top: 10vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  text-align: center;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: 0.75s;
-}
-
-.logo.tauri:hover {
-  filter: drop-shadow(0 0 2em #24c8db);
-}
-
-.row {
-  display: flex;
-  justify-content: center;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-
-a:hover {
-  color: #535bf2;
-}
-
-h1 {
-  text-align: center;
-}
-
-input,
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  color: #0f0f0f;
-  background-color: #ffffff;
-  transition: border-color 0.25s;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-}
-
-button {
-  cursor: pointer;
-}
-
-button:hover {
-  border-color: #396cd8;
-}
-button:active {
-  border-color: #396cd8;
-  background-color: #e8e8e8;
-}
-
-input,
-button {
-  outline: none;
-}
-
-#greet-input {
-  margin-right: 5px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color: #f6f6f6;
-    background-color: #2f2f2f;
-  }
-
-  a:hover {
-    color: #24c8db;
-  }
-
-  input,
-  button {
-    color: #ffffff;
-    background-color: #0f0f0f98;
-  }
-  button:active {
-    background-color: #0f0f0f69;
-  }
-}
 
 </style>
